@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+   <head>
+      <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sfuma</title>
+<link rel="stylesheet" href="/css/style.css?v=1.2">
+
+<link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png">
+<link rel="manifest" href="/favicons/site.webmanifest">
+<link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#5bbad5">
+<meta name="msapplication-TileColor" content="#da532c">
+<meta name="theme-color" content="#ffffff">
+
+   </head>
+   <body>
+      <div class="modal feedback-modal" hidden="" data-modal="" id="feedback-modal">
+   <div class="modal-content feedback-modal-content" data-modal-content="">
+      <button class="modal-close" aria-label="Close" data-close-modal="">
+         <svg aria-hidden="true"><use href="/svg/svg.svg#close"></use></svg>
+      </button>
+
+      <div class="modal-feedback-form">
+         <div class="modal-feedback-form__title">Забронировать номер</div>
+         <div class="modal-feedback-form__desc prose">
+            <p>Мы все читаем и это в целом отличный способ написать нам, мы ценим гостиприимность и всегда рады вашим отзывам и пожеланиям</p>
+         </div>
+         <div class="grid grid-cols-2 gap-20">
+            <label class="field-wrapper">
+               <span class="field-wrapper__title sr-only">Выбрать номер</span>
+               <input type="text" name="" class="field field--md" placeholder="Выбрать номер">
+            </label>
+            <label class="field-wrapper">
+               <span class="field-wrapper__title sr-only">Желаемая дата</span>
+               <input type="text" name="" class="field field--md" placeholder="Желаемая дата">
+            </label>
+            <label class="field-wrapper">
+               <span class="field-wrapper__title sr-only">Ваше имя</span>
+               <input type="text" name="" class="field field--md" placeholder="Ваше имя">
+            </label>
+            <label class="field-wrapper">
+               <span class="field-wrapper__title sr-only">Ваш номер</span>
+               <input type="text" name="" class="field field--md" placeholder="Ваш номер">
+            </label>
+            <label class="field-wrapper col-span-2">
+               <span class="field-wrapper__title sr-only">Сопроводительный комментарий</span>
+               <textarea name="" id="" cols="30" rows="10" class="field field--md" placeholder="Сопроводительный комментарий"> </textarea>
+            </label>
+            <!-- <label>
+               <input type="checkbox" class="checkbox" />
+               Согласие на обработку данных
+            </label> -->
+            <button class="btn btn--md btn--primary w-fit">Отправить заявку</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+      <div class="main-wrapper">
+         <div class="header">
+   <div class="container">
+      <a href="/" class="logo"></a>
+      <nav class="main-nav">
+         <ul>
+            <li><a href="#">О нас</a></li>
+            <li><a href="#">Номера</a></li>
+            <li><a href="#">Контакты</a></li>
+         </ul>
+      </nav>
+      <div class="main-phones">
+         <svg aria-hidden="true"><use href="/svg/svg.svg#phone"></use></svg>
+         <ul>
+            <li><a href="tel:0935286359">093 528 63 59</a></li>
+         </ul>
+      </div>
+      <button data-toggle-modal="feedback-modal" class="btn btn--md btn--primary callback-btn">Забронировать номер</button>
+      <ul class="langs">
+         <li><a href="#">Urk</a></li>
+      </ul>
+   </div>
+</div>
+
+         <div class="main-wrapper-inner">
+            <div class="h-900"></div>
+         </div>
+         
+      </div>
+      <script src="/js/main.js?v=1.1"></script>
+   </body>
+   
+</html>

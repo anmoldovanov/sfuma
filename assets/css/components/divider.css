@@ -1,0 +1,26 @@
+.line-devider {
+   @apply text-divider;
+   height: 2px;
+   width: 100%;
+   background: currentColor;
+   background-clip: content-box;
+   span {
+      @apply text-black;
+      flex-shrink: 0;
+      padding-left: 1rem;
+      padding-right: 1rem;
+   }
+   &--has-text {
+      background: transparent;
+      display: flex;
+      align-items: center;
+   }
+   &--has-text::before,
+   &--has-text::after {
+      content: "";
+      display: block;
+      height: 1px;
+      width: 100%;
+      background: currentColor;
+   }
+}

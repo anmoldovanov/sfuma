@@ -1,0 +1,46 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+
+@import "./components/container.css";
+@import "./components/loader.css";
+@import "./components/buttons-base.css";
+@import "./components/buttons-config.css";
+
+@import "./base/fonts.css";
+@import "./base/global.css";
+@import "./base/animations.css";
+@import "./components/text-field.css";
+@import "./components/modal.css";
+@import "./components/link.css";
+@import "./components/typo.css";
+@import "./components/swiper.css";
+@import "./components/tablist.css";
+@import "./components/burger.css";
+@import "./components/checkbox.css";
+/* @import "./components/burger.css"; */
+/* @import "./components/lightgallery.css";
+@import "./components/typo.css";
+@import "./components/checkbox.css";
+@import "./components/counter.css";
+@import "./components/block-loading.css";
+
+@import "./components/swiper.css";
+@import "./components/tablist.css"; */
+/* @import "./components/text-field.css";
+@import "./components/modal.css";
+@import "./components/typo.css";
+@import "./components/divider.css";
+@import "./components/switcher.css";
+@import "./components/dropdown.css"; */
+/* @import "./components/swiper.css";
+@import "./components/swiper-pagination.css"; */
+/* @import "./components/range-slider.css"; */
+/* @import "./components/multi-switcher.css";
+@import "./components/select.css";
+@import "./components/range-slider.css"; */
+
+@import "./parts/header.css";
+@import "./parts/footer.css";
+@import "./parts/feedback.css";
+
+@import "tailwindcss/utilities";

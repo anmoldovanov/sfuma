@@ -1,0 +1,70 @@
+.switcher-wrapper {
+   display: inline-flex;
+   align-items: center;
+   &__label {
+      @apply text-gray;
+      padding-left: 1.5rem;
+      &::before {
+         content: "-";
+         padding-right: 1rem;
+      }
+   }
+}
+.switcher {
+   cursor: pointer;
+   display: inline-block;
+   &__content {
+      @apply rounded-sm bg-divider;
+      position: relative;
+      display: block;
+      height: 3rem;
+      width: 6rem;
+      /* &::before {
+         content: "";
+         position: absolute;
+         top: 4px;
+         left: 4px;
+         right: 4px;
+         bottom: 4px;
+         background-color: inherit;
+         border-radius: inherit;
+      } */
+      &::after {
+         content: "";
+         position: absolute;
+         top: 50%;
+         left: 7px;
+         width: 1.6rem;
+         height: 1.6rem;
+         @apply rounded-tiny bg-gray;
+         transition: var(--transition-default);
+         transform: translate(0, -50%);
+         will-change: transform;
+      }
+   }
+   &:hover input:not(:checked) ~ &__content::after {
+      @apply bg-white;
+   }
+   &:hover input:checked ~ &__content::after {
+      @apply bg-orange-light;
+   }
+   input:checked ~ &__content {
+      @apply bg-orange bg-opacity-5;
+      &::after {
+         transform: translate(3rem, -50%);
+         @apply bg-orange;
+      }
+   }
+   input:focus-visible ~ &__content {
+      @apply ring ring-gray;
+   }
+   input:checked:focus-visible ~ &__content {
+      @apply ring-orange;
+   }
+   /* &--primary &__content {
+      @apply bg-black;
+   }
+   &--primary input:checked ~ &__content {
+      @apply bg-primary;
+   } */
+}

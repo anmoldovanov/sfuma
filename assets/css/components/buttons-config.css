@@ -1,0 +1,36 @@
+.btn {
+   font-weight: bold;
+   text-transform: uppercase;
+   letter-spacing: 0.1em;
+   &:hover {
+      &::before {
+         transform: scale(1.02, 1.04);
+      }
+   }
+   &:active {
+      &::before {
+         transform: scale(1, 1);
+      }
+   }
+}
+
+.btn--md {
+   --size: 6rem;
+   --padding: 4rem;
+   --font-size: 1.2rem;
+}
+.btn--sm {
+   --size: 3.2rem;
+   --padding: 1.6rem;
+   --font-size: 1.4rem;
+}
+
+.btn--primary {
+   --color: theme("colors.white");
+   --bg: #716d56;
+}
+
+.btn--white {
+   --color: #000;
+   --bg: theme("colors.white");
+}

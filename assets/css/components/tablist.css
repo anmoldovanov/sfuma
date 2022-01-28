@@ -1,0 +1,17 @@
+.collapse {
+   &-enter-active,
+   &-leave-active {
+      transition: 0.3s ease-in-out;
+   }
+   &-enter-from,
+   &-leave-to {
+      height: 0;
+   }
+   &-leave-from,
+   &-enter-to {
+      height: var(--height);
+   }
+}
+/* .tablist-leave-active {
+   animation: 0.3s heightIn ease-in-out reverse;
+} */

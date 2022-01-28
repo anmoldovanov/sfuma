@@ -1,0 +1,58 @@
+:root {
+   --modal-z: 99;
+   --body-scrollbar-width: 0px;
+}
+.modal-prevent-scroll {
+   overscroll-behavior: none;
+   touch-action: none;
+   overflow: hidden;
+   padding-right: var(--body-scrollbar-width);
+}
+.modal-backdrop {
+   @apply fixed inset-0;
+   transform: translateZ(0);
+   z-index: calc(var(--modal-z) - 1);
+}
+.modal {
+   @apply fixed inset-0;
+   z-index: 100;
+   display: flex;
+   z-index: var(--modal-z);
+   transform: translateZ(0);
+   overflow-x: hidden;
+   overflow-y: auto;
+   overscroll-behavior-y: contain;
+   backdrop-filter: blur(0.5rem);
+   &:focus {
+      outline: none;
+   }
+   &--loading {
+      &::after {
+         content: "";
+         position: absolute;
+         top: 50%;
+         left: 50%;
+         transform: translate(-50%, -50%);
+         @apply loader text-white;
+         --loader-size: 5rem;
+         --loader-border-width: 10%;
+      }
+   }
+}
+
+.modal-content {
+   margin: auto;
+   max-width: 100%;
+   overflow: hidden;
+   z-index: var(--modal-z);
+   position: relative;
+}
+
+.modal-close {
+   @apply btn-base;
+   padding: 1rem;
+   svg {
+      width: 2.4rem;
+      height: 2.4rem;
+   }
+}

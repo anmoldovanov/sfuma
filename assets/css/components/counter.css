@@ -1,0 +1,27 @@
+.counter {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   gap: 0.5rem;
+   &__input {
+      width: 3rem;
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: normal;
+   }
+   &__btn {
+      width: 4.8rem;
+      height: 4.8rem;
+      border-radius: 50%;
+      --color: #000;
+      --padding: 0;
+      --font-size: 1.6rem;
+      border: 1px solid #d2d2d2;
+      &:hover {
+         border-color: black;
+      }
+      &:active {
+         @apply border-primary text-primary;
+      }
+   }
+}

@@ -1,0 +1,166 @@
+.btn-base {
+   outline: none;
+   appearance: none;
+   border-radius: 0;
+   background-color: transparent;
+   background-image: none;
+   box-shadow: none;
+   border-width: 0;
+   font-weight: inherit;
+   color: inherit;
+   display: inline-block;
+   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+   transition-duration: 0.15s;
+}
+.btn-base:focus {
+   @apply outline-none;
+}
+.btn-base:focus-visible {
+   @apply outline outline-4 outline-offset-2 outline-primary;
+}
+
+.btn {
+   --border-width: 1px;
+   --shadow: 0 2px 5px rgb(26 26 67 / 15%);
+   --border-radius: theme("borderRadius.DEFAULT");
+
+   --disabled-opacity: 0.5;
+   --ghost-opacity: 0.2;
+   --ghost-opacity-2: 0.25;
+   --ghost-opacity-3: 0.3;
+   --loader-size: 1.2em;
+   --loader-color: currentColor;
+   --loader-border-width: 30%;
+   --loader-progress: 50%;
+
+   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+   transition-duration: 0.15s;
+
+   appearance: none;
+   background-color: transparent;
+   border-width: 0;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   position: relative;
+   box-shadow: none;
+   border-width: 0;
+   line-height: 1;
+   z-index: 1;
+   vertical-align: middle;
+   border-radius: var(--border-radius);
+   font-weight: inherit;
+   font-size: var(--font-size, inherit);
+   padding-left: var(--padding, 0);
+   padding-right: var(--padding, 0);
+   height: var(--size, auto);
+   min-width: var(--size, auto);
+   color: var(--color, inherit);
+   outline: none;
+   border-width: 0;
+   border-style: solid;
+   border-color: var(--border-color, var(--bg));
+   flex-shrink: 0;
+   &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      border-radius: inherit;
+      z-index: -1;
+      transition: inherit;
+      background-color: var(--bg);
+      transition-duration: 0.2s;
+   }
+
+   &:focus-visible {
+      outline-color: var(--bg, theme("colors.primary.DEFAULT"));
+   }
+   &--inset:focus-visible {
+      outline-offset: -3px;
+   }
+   &:is([disabled], :disabled, .disabled) {
+      opacity: var(--disabled-opacity);
+      cursor: not-allowed;
+   }
+   svg {
+      pointer-events: none;
+   }
+
+   .btn--shadow {
+      box-shadow: var(--shadow);
+   }
+   .btn--till {
+      border-radius: 0;
+   }
+   .btn--block {
+      width: 100%;
+   }
+   .btn--rounded {
+      @apply rounded-size;
+   }
+   .btn--offset-r {
+      margin-right: calc(var(--padding) * -1);
+   }
+   .btn--offset-l {
+      margin-left: calc(var(--padding) * -1);
+   }
+   .btn--offset-x {
+      margin-left: calc(var(--padding) * -1);
+      margin-right: calc(var(--padding) * -1);
+   }
+   @layer utilities {
+      .btn--icon {
+         width: var(--size);
+         padding: 0;
+      }
+      .btn--padding {
+         width: auto;
+         padding-left: var(--padding, 0);
+         padding-right: var(--padding, 0);
+      }
+      .btn--text {
+         color: var(--bg, inherit);
+         background-color: transparent;
+      }
+   }
+   .btn--outlined {
+      border-width: var(--border-width);
+      border-color: var(--border-color);
+      background-color: transparent;
+   }
+}
+
+.btn.loading:not(.btn--no-loader) {
+   -webkit-text-fill-color: transparent;
+   & > * {
+      visibility: hidden;
+   }
+   &::after {
+      content: "";
+      @apply loader;
+      position: absolute;
+      margin: 0;
+      top: 50%;
+      left: 50%;
+      animation: loading-offset var(--loader-speed, 0.6s) linear infinite;
+   }
+   .hide-on-loading {
+      display: none;
+   }
+}
+
+@layer utilities {
+   .px-var {
+      padding-left: var(--padding);
+      padding-right: var(--padding);
+   }
+   .pl-var {
+      padding-left: var(--padding);
+   }
+   .pr-var {
+      padding-right: var(--padding);
+   }
+}

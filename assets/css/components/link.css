@@ -1,0 +1,21 @@
+@layer components {
+   .link {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.3em;
+      text-decoration-color: transparent;
+      @apply transition duration-200;
+      &:hover {
+         text-decoration-color: currentColor;
+      }
+      &:active {
+         opacity: 0.5;
+      }
+      .is-safari & {
+         transition: none;
+      }
+   }
+   .link--dashed {
+      text-decoration-style: dashed;
+   }
+}
