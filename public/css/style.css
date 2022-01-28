@@ -2006,9 +2006,9 @@ mark {
    margin-right: 0;
    padding: 5.5rem 9rem;
    color: #52514b;
-   display: flex;
-   flex-direction: column;
-   justify-content: flex-end;
+   display: grid;
+   align-items: flex-end;
+   overflow: hidden auto;
 }
 .feedback-modal-content .modal-close {
       position: absolute;

@@ -41,12 +41,12 @@ const EVENT_INIT = "init";
 const EVENT_DESTROY = "destroy";
 const EVENT_BEFORE_SHOW = "beforeOpen";
 const EVENT_OPEN = "open";
-const EVENT_OPENED = "opened";
+const EVENT_AFTER_OPEN = "afterOpen";
 const EVENT_BEFORE_CLOSE = "beforeClose";
 const EVENT_CLOSE = "close";
-const EVENT_CLOSED = "closed";
+const EVENT_AFTER_CLOSE = "afterClose";
 const EVENT_CLOSE_PREVENTED = "closePrevented";
-const EVENT_FULL_OPENED = "fullOpened";
+const EVENT_FULL_OPENED = "fullOpen";
 const EVENT_CONTENT_SET = "contentSet";
 const EVENT_CONFIRM = CONFIRM;
 const EVENT_CANCEL = CANCEL;
@@ -62,21 +62,19 @@ const ON_MODAL_CONFIRM = "_onModalConfirm";
 const ON_MODAL_CANCEL = "_onModalCancel";
 
 const STATE_OPEN = EVENT_OPEN;
-const STATE_OPENED = EVENT_OPENED;
-const STATE_CLOSE = EVENT_CLOSE;
-const STATE_CLOSED = EVENT_CLOSED;
+const STATE_CLOSE = "closed";
 const STATE_CLOSE_PREVENTED = EVENT_CLOSE_PREVENTED;
 
 const STATE_TRANSITION_FROM = "From";
 const STATE_TRANSITION_TO = "To";
 const STATE_TRANSITION_EMPTY = "";
 
-const STATE_FULL_OPENED = "fullOpened";
+const STATE_FULL_OPEN = "fullOpen";
 
 const PREVENT_SCROLL = "preventScroll";
 
-const PRIMARY_STATES = [STATE_OPEN, STATE_OPENED, STATE_CLOSE, STATE_CLOSED];
-const SECONDARY_STATES = [STATE_CLOSE_PREVENTED, STATE_FULL_OPENED];
+const PRIMARY_STATES = [STATE_OPEN, STATE_CLOSE];
+const SECONDARY_STATES = [STATE_CLOSE_PREVENTED, STATE_FULL_OPEN];
 const STATES = [...PRIMARY_STATES, ...SECONDARY_STATES];
 
 const STATE_TRANSITION_ENTER_ACTIVE = "enterActive";
@@ -110,6 +108,8 @@ const BACKDROP_HTML = `<div class="modal-backdrop" data-${MODAL}-${BACKDROP}></d
 const CONTENT_HTML = `<div class="modal-content" data-${MODAL}-${CONTENT}></div>`;
 const MODAL_HTML = `<div class="modal" data-${MODAL}>${BACKDROP_HTML + CONTENT_HTML}</div>`;
 
+const body = document.body;
+
 // ==========
 // Helpers
 // ==========
@@ -117,7 +117,7 @@ const MODAL_HTML = `<div class="modal" data-${MODAL}>${BACKDROP_HTML + CONTENT_H
 // updateBodyScrollbarWidth();
 
 const updateBodyScrollbarWidth = (bodyScrollbarWidthVar) => {
-   return getElement(":root").style.setProperty(bodyScrollbarWidthVar, window.innerWidth - document.body.offsetWidth + "px");
+   return getElement(":root").style.setProperty(bodyScrollbarWidthVar, window.innerWidth - body.offsetWidth + "px");
 };
 
 class Modal extends Base {
@@ -143,7 +143,7 @@ class Modal extends Base {
       closeOnOverlayClick: true,
       returnFocusElem: null,
       returnFocusAfterHide: true,
-      resetScrollAfterHide: true,
+      resetScroll: true,
       useFocusTrapping: true,
       useHiddenAttribute: true,
       bodyScrollbarWidthVar: "--body-scrollbar-width",
@@ -151,8 +151,8 @@ class Modal extends Base {
       // awaitPreviousModal: true,
       closeable: true,
       openable: true,
-      createOnOpen: false,
-      removeOnClosed: false,
+      createOnOpen: true,
+      removeOnClosed: true,
       destroyOnClosed: false,
       appendTarget: "body",
       portal: "body",
@@ -254,7 +254,7 @@ class Modal extends Base {
       DOM_ELEMENTS.forEach((elemName) => {
          this.promises[elemName] = new Set();
          this.states[elemName] = {
-            states: [STATE_CLOSED],
+            states: [STATE_CLOSE],
             animations: [],
          };
       });
@@ -266,8 +266,8 @@ class Modal extends Base {
                this.opts.classes[elemName][stateName] += " " + value;
             }
          });
-         this._setStateClasses(elemName, initOpened ? STATE_OPENED : STATE_CLOSED);
-         this._setStateClasses(elemName, STATE_FULL_OPENED, initOpened);
+         this._setStateClasses(elemName, initOpened ? STATE_OPEN : STATE_CLOSE);
+         this._setStateClasses(elemName, STATE_FULL_OPEN, initOpened);
       });
 
       this.updateAriaTargets();
@@ -317,6 +317,10 @@ class Modal extends Base {
 
       this.focusTrap = new FocusTrap(this[MODAL]);
 
+      if (!this.isShown && this.opts.removeOnClosed) {
+         this.remove();
+      }
+
       return this;
    }
    destroy() {
@@ -343,7 +347,7 @@ class Modal extends Base {
       return DOM_ELEMENTS.some((elemName) => this.promises[elemName].size);
    }
    get allowChangeBackdrop() {
-      return !this.group || (this.group && this.groupModals.every(({ states, isShown }) => !isShown || !states[BACKDROP].states.includes(STATE_OPENED)));
+      return !this.group || (this.group && this.groupModals.every(({ states, isShown }) => !isShown || !states[BACKDROP].states.includes(STATE_OPEN)));
    }
    get shownPreventScrollModals() {
       return this.shownModals.filter(({ opts }) => opts.preventScroll);
@@ -395,7 +399,7 @@ class Modal extends Base {
    }
    createBackdrop() {
       // console.log(this.DOM[BACKDROP], this.group);
-      if (this[BACKDROP] && document.body.contains(this[BACKDROP])) return;
+      if (this[BACKDROP] && body.contains(this[BACKDROP])) return;
       this[BACKDROP] = fragment(this.opts.render[BACKDROP]);
 
       (this.groupModals[0] || this)[MODAL].before(this[BACKDROP]);
@@ -537,6 +541,9 @@ class Modal extends Base {
          for (let elemName of [MODAL, BACKDROP]) {
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_FROM);
             this.toggleHidden(elemName, 0);
+            if (this.opts.resetScroll) {
+               this.scrollTo(elemName);
+            }
             this._repaintElem(elemName);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_TO);
             this._setStateClasses(elemName, STATE_OPEN);
@@ -587,13 +594,15 @@ class Modal extends Base {
       this.ajaxDonePromise = null;
 
       if (!s) {
-         DOM_ELEMENTS.forEach((elemName) => {
-            this._setStateClasses(elemName, STATE_FULL_OPENED, 0);
-         });
+         this._setStateClasses(MODAL, STATE_FULL_OPEN, 0);
       }
       this._setTransitionStateClasses(CONTENT, STATE_TRANSITION_FROM);
 
       s && this.toggleHidden(CONTENT, 0);
+
+      if (s && this.opts.resetScroll) {
+         this.scrollTo(CONTENT);
+      }
 
       this._repaintElem(CONTENT);
 
@@ -610,16 +619,12 @@ class Modal extends Base {
    }
    _setFinishState(elemName, s) {
       return Promise.allSettled(this.promises[elemName].values()).then((_) => {
-         this._setStateClasses(elemName, s ? STATE_OPENED : STATE_CLOSED);
-         this._emit(elemName, s ? EVENT_OPENED : EVENT_CLOSED);
+         // this._setStateClasses(elemName, s ? STATE_OPENED : STATE_CLOSED);
+         this._emit(elemName, s ? EVENT_AFTER_OPEN : EVENT_AFTER_CLOSE);
       });
    }
    [ON_MODAL_ANIMATION]() {
       const s = this.isShown;
-      if (!s && this.opts.resetScrollAfterHide) {
-         this[MODAL].scrollTop = 0;
-         this[CONTENT].scrollTop = 0;
-      }
       this._setFinishState(MODAL, s).then((_) => {
          if (!s) {
             this.opts.destroyOnClosed && this.destroy();
@@ -632,7 +637,7 @@ class Modal extends Base {
       this._setFinishState(BACKDROP, s);
       if (s) {
          this._toggleContent(true);
-         if (this.states[CONTENT].states.includes(STATE_OPENED) && !this[CONTENT].contains(document.activeElement)) {
+         if (this.states[CONTENT].states.includes(STATE_OPEN) && !this[CONTENT].contains(document.activeElement)) {
             this.setFocusToFirstNode();
          }
       }
@@ -661,7 +666,7 @@ class Modal extends Base {
          await Promise.allSettled(
             DOM_ELEMENTS.map((elemName) => {
                return Promise.allSettled(this.promises[elemName].values()).then((_) => {
-                  this._setStateClasses(elemName, STATE_FULL_OPENED);
+                  elemName == MODAL && this._setStateClasses(MODAL, STATE_FULL_OPEN);
                });
             })
          );
@@ -688,10 +693,19 @@ class Modal extends Base {
       promises.size ? Promise.allSettled(promises.values()).then(setEmpty) : setEmpty();
       return [...promises][0];
    }
-   _updateElemClasses(elemName) {
+   scrollTo(elemName, left = 0, top = 0, smooth = false) {
       let elem = this[elemName];
-      let states = this.states[elemName];
-      updateStateClasses.call(this, { elem, states, STATES, elemName });
+      if (!elem) return;
+      if (!smooth) {
+         elem.style.scrollBehavior = "auto";
+      }
+      elem.scrollTo({ left, top, smooth: smooth ? "auto" : "smooth" });
+      if (!smooth) {
+         elem.style.scrollBehavior = "";
+      }
+   }
+   _updateElemClasses(elemName) {
+      updateStateClasses.call(this, { elem: this[elemName], states: this.states[elemName], STATES, elemName });
    }
    _setTransitionStateClasses(elemName, stateType) {
       if (!this[elemName]) return;
@@ -707,7 +721,7 @@ class Modal extends Base {
       this._updateElemClasses(elemName);
    }
    _setStateClasses(elemName, state, s = true) {
-      if (!this[elemName] || (state !== STATE_OPENED && elemName == BACKDROP && !this.allowChangeBackdrop)) return;
+      if (!this[elemName] || (state !== STATE_OPEN && elemName == BACKDROP && !this.allowChangeBackdrop)) return;
 
       const updateStates = ({ states }, s) => {
          states = states[elemName];
