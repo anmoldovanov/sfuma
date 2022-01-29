@@ -20,11 +20,22 @@ import "./parts/header";
 import "./parts/solutions";
 import "./parts/sliders";
 
-Modal.get("feedback-modal")?.on("open contentClose", ({ type }) => {
-   anime({
-      targets: ".main-wrapper",
-      translateX: type == "open" ? "-10rem" : 0,
-      easing: "easeInOutQuad",
-      duration: 350,
+Modal.get("feedback-modal")
+   ?.update({
+      hooks: {
+         preventClose(modal) {
+            return !modal.find('[type="checkbox"]')?.checked;
+         },
+         closePrevented(modal) {
+            return !modal.find('[type="checkbox"]')?.classList.add("invalid");
+         },
+      },
+   })
+   .on("open contentClose", ({ type }) => {
+      anime({
+         targets: ".main-wrapper",
+         translateX: type == "open" ? "-10rem" : 0,
+         easing: "easeInOutQuad",
+         duration: 350,
+      });
    });
-});

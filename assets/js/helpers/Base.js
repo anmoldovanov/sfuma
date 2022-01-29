@@ -40,7 +40,7 @@ class Base {
    get inDOM() {
       return !!document.getElementById(this.id);
    }
-   setOpts(opts) {
+   update(opts) {
       this.opts = cloneDeep({ ...this.opts, ...opts });
       return this;
    }

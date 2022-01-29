@@ -17,6 +17,10 @@ const { on, off } = new EventHandler();
 import { FocusTrap } from "./helpers/focusTrap";
 
 // portal for nested modals
+// lock / unlock
+// transition as object
+// appear
+// awaiting only for Open / Close states
 
 const MODAL = "modal";
 const CONTENT = "content";
@@ -151,8 +155,8 @@ class Modal extends Base {
       // awaitPreviousModal: true,
       closeable: true,
       openable: true,
-      createOnOpen: true,
-      removeOnClosed: true,
+      createOnOpen: false,
+      removeOnClosed: false,
       destroyOnClosed: false,
       appendTarget: "body",
       portal: "body",
@@ -210,6 +214,7 @@ class Modal extends Base {
          },
          loading: "modal--loading",
       },
+      hooks: {},
    };
    static instances = new Map();
    get baseNode() {
@@ -296,7 +301,7 @@ class Modal extends Base {
 
       this.instances.set(this.id, this);
 
-      this.isShown = initOpened;
+      this.isOpen = initOpened;
       this.isInit = true;
 
       this._emit(MODAL, EVENT_INIT);
@@ -317,7 +322,7 @@ class Modal extends Base {
 
       this.focusTrap = new FocusTrap(this[MODAL]);
 
-      if (!this.isShown && this.opts.removeOnClosed) {
+      if (!this.isOpen && this.opts.removeOnClosed) {
          this.remove();
       }
 
@@ -347,7 +352,7 @@ class Modal extends Base {
       return DOM_ELEMENTS.some((elemName) => this.promises[elemName].size);
    }
    get allowChangeBackdrop() {
-      return !this.group || (this.group && this.groupModals.every(({ states, isShown }) => !isShown || !states[BACKDROP].states.includes(STATE_OPEN)));
+      return !this.group || (this.group && this.groupModals.every(({ states, isOpen }) => !isOpen || !states[BACKDROP].states.includes(STATE_OPEN)));
    }
    get shownPreventScrollModals() {
       return this.shownModals.filter(({ opts }) => opts.preventScroll);
@@ -356,16 +361,19 @@ class Modal extends Base {
       return [...this.instances.values()].filter(({ group }) => group == this.group);
    }
    get shownModals() {
-      return [...this.instances.values()].filter(({ isShown }) => isShown);
+      return [...this.instances.values()].filter(({ isOpen }) => isOpen);
    }
    get latestShownModal() {
       return this.shownModals.pop();
    }
    get shownGroupModals() {
-      return this.groupModals.filter(({ isShown, group }) => group && isShown);
+      return this.groupModals.filter(({ isOpen, group }) => group && isOpen);
    }
    get focusableNodes() {
       return this.findAll(this.opts.focusableElements).filter(({ offsetWidth }) => offsetWidth);
+   }
+   _callHook(name, defaultValue) {
+      return this.opts.hooks[name]?.(this);
    }
    updateAriaTargets() {
       [ARIA_LABELLEDBY, ARIA_DESCRIBEDBY].forEach((name) => {
@@ -410,6 +418,9 @@ class Modal extends Base {
       if (elemName == BACKDROP && !this.allowChangeBackdrop) return;
       const name = elemName == MODAL ? eventName : elemName + upperFirst(eventName);
 
+      // console.log(name);
+      // _callHook
+      this._callHook(name);
       this[MODAL].dispatchEvent(new CustomEvent(name, { detail: { modal: this } }));
       // if (checkElementAnimation) {
       //    return this._checkElementAnimation(elemName, eventName);
@@ -470,15 +481,15 @@ class Modal extends Base {
       }
    }
    async [ACTION_TOGGLE](s, { checkPrevent = true, trigger = null } = {}) {
-      let { opts, isShown } = this;
+      let { opts, isOpen } = this;
 
-      s = !!(s ?? !isShown);
+      s = !!(s ?? !isOpen);
 
       if (s) {
          this.trigger = trigger;
       }
 
-      if (this.isAnimating || s === isShown) return;
+      if (this.isAnimating || s === isOpen) return;
 
       if (opts.updateBodyScrollbarWidthOnOpen && s && !this.shownModals.some(({ opts }) => opts.preventScroll)) {
          this.updateBodyScrollbarWidth();
@@ -511,11 +522,11 @@ class Modal extends Base {
          }
       }
 
-      if (checkPrevent && !s && !opts.closeable) {
+      if (checkPrevent && !s && /*!opts.closeable &&*/ this._callHook("preventClose")) {
          await Promise.allSettled(
             DOM_ELEMENTS.map((elemName) => {
-               this._setStateClasses(elemName, STATE_CLOSE_PREVENTED);
                this._emit(elemName, EVENT_CLOSE_PREVENTED);
+               this._setStateClasses(elemName, STATE_CLOSE_PREVENTED);
                return this._checkElementAnimation(elemName, EVENT_CLOSE_PREVENTED);
             })
          );
@@ -533,12 +544,13 @@ class Modal extends Base {
          this.shownGroupModals.forEach((modal) => modal.close());
       }
 
-      this.isShown = s;
+      this.isOpen = s;
 
       if (s) {
          opts.preventScrollBeforeOpen && this._preventScroll(s);
          this.returnFocusElem = opts.returnFocusElem ?? document.activeElement;
          for (let elemName of [MODAL, BACKDROP]) {
+            this._emit(elemName, EVENT_OPEN);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_FROM);
             this.toggleHidden(elemName, 0);
             if (this.opts.resetScroll) {
@@ -547,7 +559,6 @@ class Modal extends Base {
             this._repaintElem(elemName);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_TO);
             this._setStateClasses(elemName, STATE_OPEN);
-            this._emit(elemName, EVENT_OPEN);
             await this._checkElementAnimation(elemName, EVENT_OPEN);
 
             this[DOM_ANIMATIONS[elemName]](EVENT_OPEN);
@@ -593,6 +604,8 @@ class Modal extends Base {
       }
       this.ajaxDonePromise = null;
 
+      this._emit(CONTENT, s ? EVENT_OPEN : EVENT_CLOSE);
+
       if (!s) {
          this._setStateClasses(MODAL, STATE_FULL_OPEN, 0);
       }
@@ -608,7 +621,6 @@ class Modal extends Base {
 
       this._setTransitionStateClasses(CONTENT, STATE_TRANSITION_TO);
       this._setStateClasses(CONTENT, s ? STATE_OPEN : STATE_CLOSE);
-      this._emit(CONTENT, s ? EVENT_OPEN : EVENT_CLOSE);
       await this._checkElementAnimation(CONTENT, s ? EVENT_OPEN : EVENT_CLOSE);
 
       await this[DOM_ANIMATIONS[CONTENT]](s ? EVENT_OPEN : EVENT_CLOSE);
@@ -624,7 +636,7 @@ class Modal extends Base {
       });
    }
    [ON_MODAL_ANIMATION]() {
-      const s = this.isShown;
+      const s = this.isOpen;
       this._setFinishState(MODAL, s).then((_) => {
          if (!s) {
             this.opts.destroyOnClosed && this.destroy();
@@ -633,7 +645,7 @@ class Modal extends Base {
       });
    }
    [ON_BACKDROP_ANIMATION]() {
-      const s = this.isShown;
+      const s = this.isOpen;
       this._setFinishState(BACKDROP, s);
       if (s) {
          this._toggleContent(true);
@@ -643,7 +655,7 @@ class Modal extends Base {
       }
    }
    async [ON_CONTENT_ANIMATION]() {
-      const s = this.isShown;
+      const s = this.isOpen;
 
       // s && this.setFocusToFirstNode();
 
@@ -653,11 +665,11 @@ class Modal extends Base {
          this.opts.returnFocusAfterHide && this.returnFocus();
 
          for (let elemName of [BACKDROP, MODAL]) {
+            this._emit(elemName, EVENT_CLOSE);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_FROM);
             this._repaintElem(elemName);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_TO);
             this._setStateClasses(elemName, STATE_CLOSE);
-            this._emit(elemName, EVENT_CLOSE);
             await this._checkElementAnimation(elemName, EVENT_CLOSE);
 
             this[DOM_ANIMATIONS[elemName]](EVENT_CLOSE);
@@ -711,11 +723,12 @@ class Modal extends Base {
       if (!this[elemName]) return;
       let names = [];
       if (stateType) {
-         if (this.isShown) {
-            names = stateType == STATE_TRANSITION_FROM ? [STATE_TRANSITION_ENTER_FROM] : [STATE_TRANSITION_ENTER_ACTIVE, STATE_TRANSITION_ENTER_TO];
-         } else {
-            names = stateType == STATE_TRANSITION_FROM ? [STATE_TRANSITION_LEAVE_FROM] : [STATE_TRANSITION_LEAVE_ACTIVE, STATE_TRANSITION_LEAVE_TO];
-         }
+         names =
+            stateType == STATE_TRANSITION_FROM
+               ? [this.isOpen ? STATE_TRANSITION_ENTER_FROM : STATE_TRANSITION_LEAVE_FROM]
+               : this.isOpen
+               ? [STATE_TRANSITION_ENTER_ACTIVE, STATE_TRANSITION_ENTER_TO]
+               : [STATE_TRANSITION_LEAVE_ACTIVE, STATE_TRANSITION_LEAVE_TO];
       }
       this.states[elemName].animations = names;
       this._updateElemClasses(elemName);
@@ -776,7 +789,7 @@ class Modal extends Base {
       }
       let res = await fetch(this.opts.ajax.url);
       res = await res.text();
-      if (this.isShown) {
+      if (this.isOpen) {
          this.setContent(fragment(res, this.opts.ajax.selector)[0]);
       }
    }

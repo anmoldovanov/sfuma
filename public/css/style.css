@@ -851,7 +851,7 @@ a:focus-visible, button:focus-visible {
    --state-duration-enter: none;
    --state-duration-leave: none;
 }
-@keyframes collapseFadeIn {
+/* @keyframes collapseFadeIn {
    from {
       opacity: 0;
       height: 0;
@@ -861,6 +861,7 @@ a:focus-visible, button:focus-visible {
       height: var(--height);
    }
 }
+
 @keyframes collapseFadeOut {
    from {
       opacity: 1;
@@ -876,6 +877,31 @@ a:focus-visible, button:focus-visible {
 }
 .animate-collapse-fade-out {
    animation: 0.5s collapseFadeOut forwards;
+} */
+@keyframes headshake {
+   0% {
+      transform: translateX(0);
+   }
+
+   6.5% {
+      transform: translateX(-6px) rotateY(-9deg);
+   }
+
+   18.5% {
+      transform: translateX(5px) rotateY(7deg);
+   }
+
+   31.5% {
+      transform: translateX(-3px) rotateY(-5deg);
+   }
+
+   43.5% {
+      transform: translateX(2px) rotateY(3deg);
+   }
+
+   50% {
+      transform: translateX(0);
+   }
 }
 input::placeholder,
 textarea::placeholder {
@@ -1107,6 +1133,9 @@ input[type="number"] {
    z-index: var(--modal-z);
    position: relative;
 }
+.modal-content--close-prevented {
+      animation: 0.5s headshake;
+   }
 .modal-close {
    outline: none;
    -webkit-appearance: none;
@@ -1119,8 +1148,6 @@ input[type="number"] {
    font-weight: inherit;
    color: inherit;
    display: inline-block;
-   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
-   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
    transition-duration: 0.15s;
 }

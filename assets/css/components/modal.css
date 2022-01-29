@@ -46,6 +46,9 @@
    overflow: hidden;
    z-index: var(--modal-z);
    position: relative;
+   &--close-prevented {
+      animation: 0.5s headshake;
+   }
 }
 
 .modal-close {
