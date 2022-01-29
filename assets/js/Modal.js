@@ -1,15 +1,16 @@
 import is from "./helpers/is";
-import upperFirst from "./helpers/upperFirst.js";
-import camelToKebab from "./helpers/camelToKebab.js";
-import cloneDeep from "./helpers/cloneDeep.js";
-// import fragment from "./helpers/fragment.js";
-import focusableElements from "./helpers/focusableElements.js";
-import { getElement, toggleClass, attr, fragment, $ } from "./helpers/dom.js";
-import Base from "./helpers/Base.js";
-import sleep from "./helpers/sleep.js";
+import upperFirst from "./helpers/upperFirst";
+import camelToKebab from "./helpers/camelToKebab";
+import cloneDeep from "./helpers/cloneDeep";
+// import fragment from "./helpers/fragment";
+import focusableElements from "./helpers/focusableElements";
+import { getElement, toggleClass, attr, fragment, $, repaint, animate } from "./helpers/dom";
+import Base from "./helpers/Base";
+import sleep from "./helpers/sleep";
+import { getElementStateClass } from "./helpers/utils";
 
-import collectAnimations from "./helpers/collectAnimations.js";
-import updateStateClasses from "./helpers/updateStateClasses.js";
+import collectAnimations from "./helpers/collectAnimations";
+import updateStateClasses from "./helpers/updateStateClasses";
 
 import { EventHandler } from "./helpers/event-handler";
 const { on, off } = new EventHandler();
@@ -21,6 +22,8 @@ import { FocusTrap } from "./helpers/focusTrap";
 // transition as object
 // appear
 // awaiting only for Open / Close states
+// check if hook is async
+// function for Animations
 
 const MODAL = "modal";
 const CONTENT = "content";
@@ -78,7 +81,7 @@ const STATE_FULL_OPEN = "fullOpen";
 const PREVENT_SCROLL = "preventScroll";
 
 const PRIMARY_STATES = [STATE_OPEN, STATE_CLOSE];
-const SECONDARY_STATES = [STATE_CLOSE_PREVENTED, STATE_FULL_OPEN];
+const SECONDARY_STATES = [STATE_FULL_OPEN];
 const STATES = [...PRIMARY_STATES, ...SECONDARY_STATES];
 
 const STATE_TRANSITION_ENTER_ACTIVE = "enterActive";
@@ -108,9 +111,9 @@ const ARIA_SUFFIX = {
    [ARIA_DESCRIBEDBY]: `-description`,
 };
 
-const BACKDROP_HTML = `<div class="modal-backdrop" data-${MODAL}-${BACKDROP}></div>`;
-const CONTENT_HTML = `<div class="modal-content" data-${MODAL}-${CONTENT}></div>`;
-const MODAL_HTML = `<div class="modal" data-${MODAL}>${BACKDROP_HTML + CONTENT_HTML}</div>`;
+const BACKDROP_HTML = `<div class="modal-backdrop" data-modal-backdrop></div>`;
+const CONTENT_HTML = `<div class="modal-content" data-modal-content></div>`;
+const MODAL_HTML = `<div class="modal" data-modal>${BACKDROP_HTML + CONTENT_HTML}</div>`;
 
 const body = document.body;
 
@@ -224,7 +227,7 @@ class Modal extends Base {
       return MODAL;
    }
    constructor(elem, opts = {}) {
-      super({ opts, elem });
+      super({ elem, opts });
       if (!elem) {
          return;
       }
@@ -239,7 +242,7 @@ class Modal extends Base {
    init() {
       let initOpened = this.opts.initOpened;
 
-      [CONTENT, BACKDROP, AJAX, CONFIRM, CANCEL].forEach((elemName) => {
+      [CONTENT, BACKDROP, AJAX].forEach((elemName) => {
          this.DOM[elemName] = this.find(this.getSelector(elemName));
       });
 
@@ -265,12 +268,6 @@ class Modal extends Base {
       });
 
       DOM_ELEMENTS.forEach((elemName) => {
-         SECONDARY_STATES.forEach((stateName) => {
-            let value = this[elemName]?.dataset[stateName];
-            if (value) {
-               this.opts.classes[elemName][stateName] += " " + value;
-            }
-         });
          this._setStateClasses(elemName, initOpened ? STATE_OPEN : STATE_CLOSE);
          this._setStateClasses(elemName, STATE_FULL_OPEN, initOpened);
       });
@@ -280,7 +277,7 @@ class Modal extends Base {
       this.toggleHidden(CONTENT, !initOpened);
       this.toggleHidden(MODAL, !initOpened);
 
-      [ON_MODAL_KEY_DOWN, ON_MODAL_CLICK, ON_MODAL_CONFIRM, ON_MODAL_CANCEL].forEach((h) => {
+      [ON_MODAL_KEY_DOWN, ON_MODAL_CLICK].forEach((h) => {
          this[h] = this[h].bind(this);
       });
 
@@ -399,12 +396,6 @@ class Modal extends Base {
       this[BACKDROP] && this[MODAL].before(this[BACKDROP]);
       return this;
    }
-   _repaintElem(elemName) {
-      /* eslint-disable */
-      this[elemName]?.offsetWidth;
-      /* eslint-enable */
-      return this;
-   }
    createBackdrop() {
       // console.log(this.DOM[BACKDROP], this.group);
       if (this[BACKDROP] && body.contains(this[BACKDROP])) return;
@@ -440,9 +431,6 @@ class Modal extends Base {
    getSelector(name) {
       return this.replaceTags(this.opts.selectors[name]);
    }
-   getClasses(elemName, state) {
-      return this.replaceTags(state ? this.opts.classes[elemName][state] : this.opts.classes[elemName]);
-   }
    returnFocus() {
       if (this.opts.useFocusTrapping) {
          this.focusTrap.stop();
@@ -477,7 +465,7 @@ class Modal extends Base {
    _preventScroll(s) {
       let hasPreventScrollModals = this.shownPreventScrollModals.length;
       if ((s && hasPreventScrollModals) || (!s && !hasPreventScrollModals)) {
-         this._toggleClass(ROOT, PREVENT_SCROLL, s);
+         toggleClass(this[ROOT], this.replaceTags(this.opts.classes[ROOT][PREVENT_SCROLL]), s);
       }
    }
    async [ACTION_TOGGLE](s, { checkPrevent = true, trigger = null } = {}) {
@@ -523,22 +511,16 @@ class Modal extends Base {
       }
 
       if (checkPrevent && !s && /*!opts.closeable &&*/ this._callHook("preventClose")) {
-         await Promise.allSettled(
-            DOM_ELEMENTS.map((elemName) => {
-               this._emit(elemName, EVENT_CLOSE_PREVENTED);
-               this._setStateClasses(elemName, STATE_CLOSE_PREVENTED);
-               return this._checkElementAnimation(elemName, EVENT_CLOSE_PREVENTED);
-            })
-         );
-         for (let elemName of DOM_ELEMENTS) {
-            this._setStateClasses(elemName, STATE_CLOSE_PREVENTED, 0);
-         }
+         DOM_ELEMENTS.map((elemName) => {
+            this._emit(elemName, EVENT_CLOSE_PREVENTED);
+            animate(this[elemName], getElementStateClass(this.constructor.NAME, elemName, STATE_CLOSE_PREVENTED));
+         });
          return this;
       }
 
       toggleClass(this.trigger, trigger?.dataset.modalOpenClass ?? opts.classes.toggler.active, s);
 
-      this._toggleClass(ROOT, STATE_OPEN, s);
+      toggleClass(this[ROOT], this.replaceTags(this.opts.classes[ROOT][STATE_OPEN]), s);
 
       if (s && this.group && opts.groupClosePrevious) {
          this.shownGroupModals.forEach((modal) => modal.close());
@@ -556,7 +538,7 @@ class Modal extends Base {
             if (this.opts.resetScroll) {
                this.scrollTo(elemName);
             }
-            this._repaintElem(elemName);
+            repaint(this[elemName]);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_TO);
             this._setStateClasses(elemName, STATE_OPEN);
             await this._checkElementAnimation(elemName, EVENT_OPEN);
@@ -568,14 +550,14 @@ class Modal extends Base {
          this._toggleContent(false);
       }
 
-      if (opts.type == TYPE_CONFIRM) {
-         on(this[MODAL], EVENT_CONFIRM, this[ON_MODAL_CONFIRM]);
-         on(this[MODAL], EVENT_CANCEL, this[ON_MODAL_CANCEL]);
-         return new Promise((resolve, reject) => {
-            this._resolve = resolve;
-            this._reject = reject;
-         });
-      }
+      // if (opts.type == TYPE_CONFIRM) {
+      //    on(this[MODAL], EVENT_CONFIRM, this[ON_MODAL_CONFIRM]);
+      //    on(this[MODAL], EVENT_CANCEL, this[ON_MODAL_CANCEL]);
+      //    return new Promise((resolve, reject) => {
+      //       this._resolve = resolve;
+      //       this._reject = reject;
+      //    });
+      // }
 
       if (opts.ajax?.url && opts.ajax?.selector) {
          await this.fetchAjaxContent();
@@ -617,7 +599,7 @@ class Modal extends Base {
          this.scrollTo(CONTENT);
       }
 
-      this._repaintElem(CONTENT);
+      repaint(this[CONTENT]);
 
       this._setTransitionStateClasses(CONTENT, STATE_TRANSITION_TO);
       this._setStateClasses(CONTENT, s ? STATE_OPEN : STATE_CLOSE);
@@ -667,7 +649,7 @@ class Modal extends Base {
          for (let elemName of [BACKDROP, MODAL]) {
             this._emit(elemName, EVENT_CLOSE);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_FROM);
-            this._repaintElem(elemName);
+            repaint(this[elemName]);
             this._setTransitionStateClasses(elemName, STATE_TRANSITION_TO);
             this._setStateClasses(elemName, STATE_CLOSE);
             await this._checkElementAnimation(elemName, EVENT_CLOSE);
@@ -748,9 +730,6 @@ class Modal extends Base {
 
       this._updateElemClasses(elemName);
    }
-   _toggleClass(elemName, state, s) {
-      toggleClass(this[elemName], this.getClasses(elemName, state), s);
-   }
 
    [ON_MODAL_CLICK](e) {
       this.opts.clickStopPropagation && e.stopPropagation();
@@ -775,14 +754,14 @@ class Modal extends Base {
          this[ACTION_CLOSE](true);
       }
    }
-   [ON_MODAL_CONFIRM]() {
-      this._resolve(true);
-      // this[ACTION_CLOSE]();
-   }
-   [ON_MODAL_CANCEL]() {
-      this._resolve(false);
-      this[ACTION_CLOSE]();
-   }
+   // [ON_MODAL_CONFIRM]() {
+   //    this._resolve(true);
+   //    // this[ACTION_CLOSE]();
+   // }
+   // [ON_MODAL_CANCEL]() {
+   //    this._resolve(false);
+   //    this[ACTION_CLOSE]();
+   // }
    async fetchAjaxContent() {
       if (this.opts.ajax._timeout) {
          await sleep(this.opts.ajax._timeout);
@@ -837,13 +816,18 @@ class Modal extends Base {
       return this.defaultSettings.classes;
    }
    static create(html, opts = {}) {
-      opts = cloneDeep({ ...this.defaultSettings, ...opts });
-      let modalElem = fragment(html || this.defaultSettings.render[MODAL](opts));
+      // opts = cloneDeep({ ...this.defaultSettings, ...opts });
+      let modalElem = is.string(html) ? fragment(html || this.defaultSettings.render[MODAL]) : html;
       let modal = new Modal(modalElem, opts);
       if (!modal.opts.createOnOpen) {
          modal.append();
       }
       return modal;
+   }
+   static wrapContent(html) {
+      let wrapper = fragment(this.defaultSettings.render[MODAL]);
+      wrapper.querySelector("[data-modal-content]").innerHTML = html;
+      return wrapper;
    }
 }
 

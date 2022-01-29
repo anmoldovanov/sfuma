@@ -109,8 +109,29 @@ export function _is(elem, selector) {
 export function has(elem, selector) {
    return getElement(selector, elem) && elem;
 }
+export function repaint(elem) {
+   /* eslint-disable */
+   elem && elem.offsetWidth;
+   /* eslint-enable */
+}
+export function animate(elem, value) {
+   if (!elem) return;
+   removeClass(elem, value);
+   repaint(elem);
+   addClass(elem, value);
+   let animations = elem.getAnimations();
+   if (animations.length) {
+      return Promise.all(animations.map(({ finished }) => finished))
+         .then((_) => {
+            removeClass(elem, value);
+         })
+         .catch((err) => {});
+   } else {
+      removeClass(elem, value);
+   }
+}
 
-const foreachMethods = { toggleClass, addClass, removeClass, attr, removeAttr, toggleAttr, on, once, off, remove, prop, closest, toggle, hide, show, is: _is };
+const foreachMethods = { toggleClass, addClass, removeClass, attr, removeAttr, toggleAttr, on, once, off, remove, prop, closest, toggle, hide, show, is: _is, repaint, animate };
 const mapMethods = { parent, parents, prev, next, prevAll, nextAll, children, siblings, find, has };
 
 export function fragment(html, findSelectors) {

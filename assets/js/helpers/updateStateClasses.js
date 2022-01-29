@@ -16,16 +16,15 @@ const STATES_ANIMATIONS = [
 import camelToKebab from "./camelToKebab";
 import { toggleClass } from "./dom";
 import is from "./is";
+import { getElementStateClass } from "./utils";
 function updateStateClasses({ elem, states, elemName, STATES }) {
-   const baseName = this.constructor.NAME.toLowerCase();
-   const isBase = !elemName || elemName == baseName;
    const c = ["", ""];
    let transitionName = elem.dataset.transitionName || this.opts.transitionName || "v";
    if (is.object(transitionName)) {
       transitionName = transitionName[elemName];
    }
    STATES.forEach((state) => {
-      c[states.states.includes(state) | 0] += `${isBase ? baseName : `${baseName}-${elemName}`}--${camelToKebab(state)} `;
+      c[states.states.includes(state) | 0] += getElementStateClass(this.constructor.NAME, elemName, state);
    });
    STATES_ANIMATIONS.forEach((state) => {
       c[states.animations.includes(state) | 0] += `${transitionName ? `${transitionName}-${camelToKebab(state)}` : ""} ${elem.dataset[state] ?? ""} `;

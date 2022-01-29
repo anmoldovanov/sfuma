@@ -903,6 +903,9 @@ a:focus-visible, button:focus-visible {
       transform: translateX(0);
    }
 }
+.animate-headshake {
+   animation: 1s headshake;
+}
 input::placeholder,
 textarea::placeholder {
    opacity: 1;
@@ -1148,6 +1151,8 @@ input[type="number"] {
    font-weight: inherit;
    color: inherit;
    display: inline-block;
+   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
+   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
    transition-duration: 0.15s;
 }

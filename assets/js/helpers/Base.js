@@ -26,7 +26,8 @@ class Base {
             }
          }
       }
-      this.id = elem.id ||= this.opts.initialId ?? constructorName + "-" + Math.random().toString(36).substring(2, 9);
+      this.uuid = constructorName + "-" + Math.random().toString(36).substring(2, 9);
+      this.id = elem.id ||= this.opts.initialId ?? this.uuid;
 
       this._events = {};
 
